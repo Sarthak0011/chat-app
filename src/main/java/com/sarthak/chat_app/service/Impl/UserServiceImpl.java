@@ -4,7 +4,7 @@ import com.sarthak.chat_app.config.security.JwtUtils;
 import com.sarthak.chat_app.config.security.UserDetailsServiceImpl;
 import com.sarthak.chat_app.dto.UserDto;
 import com.sarthak.chat_app.entity.UserEntity;
-import com.sarthak.chat_app.exceptions.ApiException;
+import com.sarthak.chat_app.exceptions.BadRequest;
 import com.sarthak.chat_app.exceptions.InvalidAuthenticationToken;
 import com.sarthak.chat_app.exceptions.ResourceNotFoundException;
 import com.sarthak.chat_app.repository.UserRepository;
@@ -14,7 +14,6 @@ import com.sarthak.chat_app.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -36,11 +35,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto createUser(RegisterUserRequest registerUserRequest) {
         if (!registerUserRequest.getPassword().equals(registerUserRequest.getConfirmPassword())) {
-            throw new ApiException("Passwords doesn't match.");
+            throw new BadRequest("Passwords doesn't match.");
         }
         Optional<UserEntity> dbUser = userRepository.findByEmail(registerUserRequest.getEmail());
         if (dbUser.isPresent()) {
-            throw new ApiException("User already registered.");
+            throw new BadRequest("User already registered.");
         }
         UserEntity userEntity = new UserEntity();
         userEntity.setEmail(registerUserRequest.getEmail());
