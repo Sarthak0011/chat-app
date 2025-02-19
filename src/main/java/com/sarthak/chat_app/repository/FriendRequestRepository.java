@@ -1,6 +1,8 @@
 package com.sarthak.chat_app.repository;
 
 import com.sarthak.chat_app.entity.FriendRequestEntity;
+import com.sarthak.chat_app.entity.UserEntity;
+import com.sarthak.chat_app.enums.RequestStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -13,4 +15,6 @@ public interface FriendRequestRepository extends JpaRepository<FriendRequestEnti
     List<FriendRequestEntity> findByReceiverId(Long receiverId);
 
     Optional<FriendRequestEntity> findBySenderIdAndReceiverId(Long senderId, Long receiverId);
+
+    List<FriendRequestEntity> findByReceiverAndRequestStatus(UserEntity user, RequestStatus requestStatus);
 }

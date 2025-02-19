@@ -45,7 +45,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse> registerUser(@RequestBody RegisterUserRequest registerUserRequest){
         UserDto userDto = userService.createUser(registerUserRequest);
         return ResponseEntity
-                .status(OK)
+                .status(CREATED)
                 .body(new ApiResponse(true,userDto, "User created", ""));
     }
 
