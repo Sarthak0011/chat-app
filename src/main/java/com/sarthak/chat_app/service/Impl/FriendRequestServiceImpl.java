@@ -8,11 +8,9 @@ import com.sarthak.chat_app.exceptions.BadRequest;
 import com.sarthak.chat_app.exceptions.ResourceNotFoundException;
 import com.sarthak.chat_app.repository.FriendRequestRepository;
 import com.sarthak.chat_app.repository.UserRepository;
-import com.sarthak.chat_app.requests.FriendRequestRequest;
 import com.sarthak.chat_app.service.FriendRequestService;
 import com.sarthak.chat_app.utils.Utils;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -28,20 +26,25 @@ public class FriendRequestServiceImpl implements FriendRequestService {
     private final Utils utils;
 
     @Override
-    public void sendFriendRequest(FriendRequestRequest friendRequestRequest) {
-        Long senderId = friendRequestRequest.getSenderId();
-        Long receiverId = friendRequestRequest.getReceiverId();
-        Optional<FriendRequestEntity> dbFriendRequest = friendRequestRepository.findBySenderIdAndReceiverId(senderId, receiverId);
+    public void sendFriendRequest(Long receiverId) {
+        UserEntity sender = utils.getAuthenticatedUser();
+
+        UserEntity receiver = userRepository.findById(receiverId)
+                .orElseThrow(() -> new ResourceNotFoundException("Receiver not found"));
+
+
+        Optional<FriendRequestEntity> dbFriendRequest = friendRequestRepository.findBySenderIdAndReceiverId(sender.getId(), receiverId);
         if (dbFriendRequest.isPresent()) {
             throw new BadRequest("Friend request has been already sent.");
         }
+
+        Optional<FriendRequestEntity> dbReverseFriendRequest = friendRequestRepository.findBySenderIdAndReceiverId(receiverId, sender.getId());
+        if (dbReverseFriendRequest.isPresent()) {
+            throw new BadRequest(receiver.getUsername() + " already sent a friend request to you.");
+        }
+
+
         FriendRequestEntity newFriendRequest = new FriendRequestEntity();
-        UserEntity sender = userRepository.findById(senderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Sender not found."));
-
-        UserEntity receiver = userRepository.findById(receiverId)
-                .orElseThrow(() -> new ResourceNotFoundException("Receiver not found."));
-
         newFriendRequest.setSender(sender);
         newFriendRequest.setReceiver(receiver);
         FriendRequestEntity friendRequestId = friendRequestRepository.save(newFriendRequest);
@@ -59,14 +62,24 @@ public class FriendRequestServiceImpl implements FriendRequestService {
 
     @Override
     public void acceptFriendRequest(Long senderId) {
-        UserEntity user = utils.getAuthenticatedUser();
-        Long receiverId = user.getId();
+        UserEntity receiver = utils.getAuthenticatedUser();
+        Long receiverId = receiver.getId();
+
+        UserEntity sender = userRepository.findById(senderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Sender not found"));
+
         FriendRequestEntity friendRequest = friendRequestRepository.findBySenderIdAndReceiverId(senderId, receiverId)
                 .orElseThrow(() -> new ResourceNotFoundException("Friend request not found"));
 
         if(friendRequest.getRequestStatus().equals(RequestStatus.ACCEPTED)) {
-            throw new BadRequest("Request already been accepted");
+            throw new BadRequest("You both are already friends.");
         }
+
+        Optional<FriendRequestEntity> reverseFriendRequest = friendRequestRepository.findBySenderIdAndReceiverId(receiverId, senderId);
+        if(reverseFriendRequest.isPresent() && reverseFriendRequest.get().getRequestStatus().equals(RequestStatus.ACCEPTED)){
+            throw new BadRequest("You both are already friends.");
+        }
+
 
         friendRequest.setRequestStatus(RequestStatus.ACCEPTED);
         friendRequestRepository.save(friendRequest);
@@ -80,6 +93,16 @@ public class FriendRequestServiceImpl implements FriendRequestService {
                 .orElseThrow(() -> new ResourceNotFoundException("Friend request not found"));
 
         friendRequestRepository.delete(friendRequest);
+    }
+
+    @Override
+    public List<FriendRequestDto> getSentFriendRequests() {
+        UserEntity user = utils.getAuthenticatedUser();
+        List<FriendRequestEntity> friendRequests = friendRequestRepository.findBySenderAndRequestStatus(user, RequestStatus.PENDING);
+        return friendRequests
+                .stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
     }
 
 
