@@ -8,6 +8,7 @@ import com.sarthak.chat_app.exceptions.BadRequest;
 import com.sarthak.chat_app.exceptions.ResourceNotFoundException;
 import com.sarthak.chat_app.repository.FriendRequestRepository;
 import com.sarthak.chat_app.repository.UserRepository;
+import com.sarthak.chat_app.service.ConversationService;
 import com.sarthak.chat_app.service.FriendRequestService;
 import com.sarthak.chat_app.utils.Utils;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class FriendRequestServiceImpl implements FriendRequestService {
     private final FriendRequestRepository friendRequestRepository;
     private final UserRepository userRepository;
     private final Utils utils;
+    private final ConversationService conversationService;
 
     @Override
     public void sendFriendRequest(Long receiverId) {
@@ -83,6 +85,7 @@ public class FriendRequestServiceImpl implements FriendRequestService {
 
         friendRequest.setRequestStatus(RequestStatus.ACCEPTED);
         friendRequestRepository.save(friendRequest);
+        conversationService.getConversation(sender, receiver);
     }
 
     @Override

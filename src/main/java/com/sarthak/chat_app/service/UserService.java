@@ -1,6 +1,7 @@
 package com.sarthak.chat_app.service;
 
 import com.sarthak.chat_app.dto.UserDto;
+import com.sarthak.chat_app.entity.UserEntity;
 import com.sarthak.chat_app.requests.LoginUserRequest;
 import com.sarthak.chat_app.requests.RegisterUserRequest;
 
@@ -15,4 +16,6 @@ public interface UserService {
     Map<String, String> generateAccessToken(String refreshToken);
 
     UserDto getUser(Long userId);
+
+    UserEntity getUserEntity(Long userId);
 }

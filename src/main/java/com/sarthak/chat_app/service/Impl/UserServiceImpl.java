@@ -52,7 +52,7 @@ public class UserServiceImpl implements UserService {
         userDto.setId(savedUser.getId());
         userDto.setEmail(savedUser.getEmail());
         userDto.setUsername(savedUser.getUsername());
-
+        userDto.setStatus(savedUser.getStatus());
         return userDto;
     }
 
@@ -95,6 +95,13 @@ public class UserServiceImpl implements UserService {
         userDto.setId(user.get().getId());
         userDto.setUsername(user.get().getUsername());
         userDto.setEmail(user.get().getEmail());
+        userDto.setStatus(user.get().getStatus());
         return userDto;
+    }
+
+    @Override
+    public UserEntity getUserEntity(Long userId) {
+        Optional<UserEntity> user = userRepository.findById(userId);
+        return user.orElse(null);
     }
 }
